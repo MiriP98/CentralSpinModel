@@ -57,6 +57,9 @@ Model::Model(int argc, char **argv)
     // the 1^st spin is the central qubit
     this->hamiltonian = new arma::sp_cx_dmat(pow(2, this->L+1), pow(2, this->L+1));
 
+    this->rho_q = new arma::dmat(2,2);
+    this->rho_q_GS = new arma::dmat(2,2);
+    
     // initialize the mag* operators ----------------------------------------
     this->magx = new arma::sp_cx_dmat(pow(2, this->L+1), pow(2, this->L+1));
     this->magy = new arma::sp_cx_dmat(pow(2, this->L+1), pow(2, this->L+1));
@@ -601,7 +604,7 @@ void Model::RungeKuttaStep()
     // compute k3
     k3 = -1.0j * (*this->hamiltonian) * (k0 + (this->deltat/2.0) * k2);
     // compute k4
-    this->EvolveHamiltonianByDx(this->deltat/2.0);
+    this->EvolveHamiltonianByDx(this->deltat/2.0);  //Ci va il /2?? in pdf non c'era
     k4 = -1.0j * (*this->hamiltonian) * (k0 + (this->deltat) * k3);
 
 
@@ -732,4 +735,83 @@ void Model::TimeEvolutionProtocol()
     // change t_KZ and the flag parameters
     this->t_KZ *= -1.0; flag *= -1.0;
     #endif
+}
+
+
+/*********************************************
+Reduced density matrix and derived observables
+*******************************************/
+
+
+void Model::Density_matrix_time_dependent()
+{
+
+  arma::dmat sigmax(2,2);
+  sigmax(0,1)=1.0;
+  sigmax(0,0)=0.0;
+  sigmax(1,0)=1.0;
+  sigmax(1,1)=0.0;
+
+  arma::cx_mat sigmay(2,2);
+  sigmay(0,1)=-1.0*j;
+  sigmay(0,0)=0.0;
+  sigmay(1,0)=1.0*j;
+  sigmay(1,1)=0.0;
+
+  arma::dmat sigmaz(2,2);
+  sigmaz(0,1)=0.0;
+  sigmaz(0,0)=1.0;
+  sigmaz(1,0)=0.0;
+  sigmaz(1,1)=-1.0;
+
+  arma::dmat id(2,2);
+  id(0,0)=1.0;
+  id(0,1)=0.0;
+  id(1,0)=0.0;
+  id(1,1)=1.0;
+
+  arma::dmat temp1= (this->magObs[0]) * sigmax+ (this->magObs[2]) * sigmaz ;
+  arma:: cx_mat A=(this->magObs[1] * sigmay) ;
+  arma::dmat B=real(A);
+  temp1= (1/(2.0))*(id+temp1+B);
+
+ (*this->rho_q)=temp1;
+
+}
+
+//Ground State "projection" of the reduced density matrix_qubit
+void Model::Density_matrix_GS()
+{
+
+  arma::dmat sigmax(2,2);
+  sigmax(0,1)=1.0;
+  sigmax(0,0)=0.0;
+  sigmax(1,0)=1.0;
+  sigmax(1,1)=0.0;
+
+  arma::cx_mat sigmay(2,2);
+  sigmay(0,1)=-1.0*j;
+  sigmay(0,0)=0.0;
+  sigmay(1,0)=1.0*j;
+  sigmay(1,1)=0.0;
+
+  arma::dmat sigmaz(2,2);
+  sigmaz(0,1)=0.0;
+  sigmaz(0,0)=1.0;
+  sigmaz(1,0)=0.0;
+  sigmaz(1,1)=-1.0;
+
+  arma::dmat id(2,2);
+  id(0,0)=1.0;
+  id(0,1)=0.0;
+  id(1,0)=0.0;
+  id(1,1)=1.0;
+
+  arma::dmat temp1= (this->maggroundObs[0]) * sigmax+ (this->maggroundObs[2]) * sigmaz ;
+  arma:: cx_mat A=(this->maggroundObs[1] * sigmay) ;
+  arma::dmat B=real(A);
+  temp1= (1/(2.0))*(id+temp1+B);
+
+ (*this->rho_q_GS)=temp1;
+
 }
