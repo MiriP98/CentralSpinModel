@@ -38,6 +38,9 @@ class Model
     arma::sp_cx_dmat *hamiltonian;
     std::string real_or_complex;
 
+    arma::dmat *rho_q;
+    arma::dmat *rho_q_GS;
+    
     // initializer
     Model(int argc, char **argv);
 
@@ -54,6 +57,8 @@ class Model
 
     // compute or write observables
     double ExpectationValueOfOperatorOnState(arma::sp_cx_dmat *op, arma::cx_vec *vec);
+    void Density_matrix_time_dependent();
+    void Density_matrix_GS();
     double ComputeAdiabaticity();
     void ComputeObservables();
     void WriteObservables();
